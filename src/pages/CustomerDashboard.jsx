@@ -1,8 +1,31 @@
-import { useSSE } from "../useSSE";
+import React, { useEffect, useRef, useState } from "react";
+import { useSSE } from "../utils/useSSE";
+import mapboxgl from 'mapbox-gl'
+
+import 'mapbox-gl/dist/mapbox-gl.css';
 
 export default function CustomerDashboard() {
     const userId = localStorage.getItem("userId");
     const notification = useSSE(userId, "http://localhost:8080/customer/events");
+
+
+    const mapRef = useRef()
+    const mapContainerRef = useRef()
+
+    useEffect(() => {
+        mapRef.current = new mapboxgl.Map({
+            accessToken: import.meta.env.VITE_MAPBOX_ACCESS_TOKEN,
+            container: mapContainerRef.current,
+            style: "mapbox://styles/mapbox/streets-v12",
+            center: [-6.2603, 53.3498], // dublin
+            zoom: 13,
+        });
+
+        return () => {
+            mapRef.current.remove()
+        }
+    }, [])
+
     
     const statusConfig = {
         Confirmed: { dot: 'bg-blue-500', pill: 'bg-blue-50   text-blue-800   border-blue-200' },
@@ -57,6 +80,9 @@ export default function CustomerDashboard() {
                         </div>
                     );
                 })}
+            </div>
+            <div style={{ height: "400px", width: "100%" }}>
+                <div ref={mapContainerRef} style={{ height: "100%", width: "100%" }} />
             </div>
         </div>
     )

@@ -3,7 +3,7 @@ import CartPage from "./pages/CartPage";
 import CustomerDashboard from "./pages/CustomerDashboard";
 import HomePage from "./pages/HomePage";
 import Login from "./pages/Login";
-import NavBar from "./pages/NavBar";
+import NavBar from "./Components/NavBar";
 import RestaurantDashboard from "./pages/RestaurantDashboard";
 import RiderDashboard from "./pages/RiderDashboard";
 

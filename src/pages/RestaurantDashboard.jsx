@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { useSSE } from "../useSSE";
+import { useSSE } from "../utils/useSSE";
 
 
 const TABS = { "PLACED": "PLACED", "PREPARING": "ORDER_ACCEPTED", "READY": "READY_FOR_PICKUP", "DELIVERED": "DELIVERED" };

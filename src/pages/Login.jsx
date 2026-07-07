@@ -4,7 +4,9 @@ import { useNavigate } from "react-router-dom";
 const roles = [
     { role: "customer", path: "home", icon: "ti-user", label: "Customer", desc: "Browse menu & place orders", bg: "bg-orange-200" },
     { role: "restaurant", path: "restaurant", icon: "ti-building-store", label: "Restaurant", desc: "Manage orders & menu", bg: "bg-pink-200" },
-    { role: "rider", path: "rider", icon: "ti-motorbike", label: "Rider", desc: "View & deliver orders", bg: "bg-purple-200" },
+    { role: "rider", path: "rider", icon: "ti-motorbike", label: "Rider-1", desc: "View & deliver orders", bg: "bg-purple-200" },
+    { role: "rider", path: "rider", icon: "ti-motorbike", label: "Rider-2", desc: "View & deliver orders", bg: "bg-purple-200" },
+    { role: "rider", path: "rider", icon: "ti-motorbike", label: "Rider-3", desc: "View & deliver orders", bg: "bg-purple-200" },
 ];
 
 export default function Login() {
@@ -14,12 +16,21 @@ export default function Login() {
         localStorage.removeItem("userId");
     }, []);
 
-    const login = (role, path) => {
+    const login = (role, path,label) => {
         localStorage.setItem("role", role);
         if (role === "customer") {
             localStorage.setItem("userId", "123e4567-e89b-12d3-a456-426614174000");
         } else if (role === "restaurant") {
             localStorage.setItem("userId", "f3e1c2d4-5b6a-7c8d-9e0f-1a2b3c4d5e6f");
+        }
+        if (role === "rider") {
+            if (label === "Rider-1") {
+                localStorage.setItem("userId", "be2e1619-c049-4729-be0b-5540d0516a23");
+            } else if (label === "Rider-2") {
+                localStorage.setItem("userId", "d97ef01a-8798-4765-8bc0-1b92a2dbcb0d");
+            } else if (label === "Rider-3") {
+                localStorage.setItem("userId", "e5c92792-799d-4be3-b50c-db237dd996bc");
+            }
         }
         navigate(`/${path}`);
     };
@@ -39,7 +50,7 @@ export default function Login() {
                     {roles.map(({ role, path, icon, label, desc, bg }) => (
                         <button
                             key={role}
-                            onClick={() => login(role, path)}
+                            onClick={() => login(role, path,label)}
                             className="flex items-center gap-3 p-3 rounded-xl border border-gray-100
                          hover:bg-gray-50 hover:border-gray-200 transition-colors text-left cursor-pointer"
                         >
