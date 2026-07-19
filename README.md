@@ -1,70 +1,120 @@
-# Getting Started with Create React App
+# Pizza Kafka — Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A three-role React dashboard (customer, restaurant, rider) for a real-time food delivery platform, built to consume an event-driven Spring Boot + Kafka backend live — order tracking, sequential rider dispatch, and live map tracking, all reflected in the UI as they happen.
 
-## Available Scripts
+**Backend repo:** [pizza-kafka-backend](https://github.com/sri1873/kafka-pizzaria-backend)
 
-In the project directory, you can run:
+---
 
-### `npm start`
+## What this demonstrates
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+The interesting part of this frontend isn't the UI polish — it's that three completely different dashboards stay in sync with a live backend event stream using three different real-time mechanisms, each chosen deliberately for what it needed to do:
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+- **Server-Sent Events** for order status pushed from the server (no polling for status)
+- **WebSocket** for streaming a rider's live location up to the server every few seconds
+- **REST polling** for the customer reading a rider's current position back out of Redis.
+---
 
-### `npm test`
+## The three dashboards
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Customer
+- Places an order, then watches it move through its lifecycle in a single status timeline (placed → accepted → ready → rider assigned → out for delivery → delivered), driven entirely by SSE push events
+- Once a rider is assigned, a live Mapbox map appears showing the rider's real position (polled from the backend's Redis store) walking an actual road route to the delivery address, with the route line rendered from the Mapbox Directions API
 
-### `npm run build`
+### Restaurant
+- Tab-based order queue (Placed / Preparing / Ready / Delivered), fetched per-status from the backend rather than fetching everything and filtering client-side
+- New orders arrive instantly via SSE and are prepended into the Placed tab without a refetch
+- Accepting/advancing an order removes it from the current tab immediately — no need to poll; the next tab fetch handles the correct list
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Rider
+- Online/offline toggle; while online, the rider's simulated position streams to the backend over WebSocket
+- Incoming order offers appear as a popup with a live 10-second countdown ring, matching the backend's sequential single-rider offer window — decline or timeout automatically moves the offer to the next-closest rider
+- Once accepted, the rider walks an actual Mapbox-routed path from restaurant to customer, pacing itself to a fixed demo duration regardless of route length, and automatically fires the pickup/delivered transitions when each leg completes
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+---
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Key frontend decisions
 
-### `npm run eject`
+### Route-following simulation, not random walk
+Early versions moved the simulated rider with random lat/lng drift, which looked unconvincing and had no relationship to the actual delivery path. The final version fetches a real route from the Mapbox Directions API between the two relevant points for the current leg (rider→restaurant, then restaurant→customer) and steps the simulated position through the actual returned coordinates — paced dynamically so a route with 20 points and one with 200 points both take the same total demo duration.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### Refs over state for values read inside intervals
+Anything read *inside* a `setInterval` callback that also needs to reflect the latest value — route progress index, current route coordinates, assignment status — is kept in a `useRef`, not `useState`. State captured in a closure at the time the interval was created goes stale; refs are read live on every tick. This was one of the trickier bugs to track down in the rider simulation and is worth calling out explicitly.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### SSE reconnection
+The backend caches the last notification sent per user and replays it immediately on a new SSE connection — this closes a real race condition where a status update could otherwise fire before the browser's `EventSource` finished connecting (e.g. immediately after placing an order and navigating to the tracking view).
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+---
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## Tech stack
 
-## Learn More
+- **React** + **Vite**
+- **Tailwind CSS**
+- **Mapbox GL JS** (`react-map-gl`) — live map, custom markers, Directions API for route rendering
+- **Axios**
+- Native **EventSource** (SSE) and **WebSocket** APIs — no external real-time library
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+---
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Getting started
 
-### Code Splitting
+### Prerequisites
+- Node 18+
+- The [backend](https://github.com/sri1873/kafka-pizzaria-backend) running locally on `localhost:8080` (Kafka + Redis + Spring Boot)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### Install & run
+```bash
+npm install
+npm run dev
+```
 
-### Analyzing the Bundle Size
+### Environment variables
+```env
+VITE_MAPBOX_ACCESS_TOKEN=your_mapbox_public_token
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+A free Mapbox account and default public token is enough — no elevated scopes needed for maps, markers, or the Directions API.
 
-### Making a Progressive Web App
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## Project structure
 
-### Advanced Configuration
+```
+src/
+├── pages/
+│   ├── Login.jsx
+│   ├── CustomerDashboard.jsx
+│   ├── RestaurantDashboard.jsx
+│   └── RiderDashboard.jsx
+├── components/
+│   └── NavBar.jsx
+├── utils/
+│   └── useSSE.js          # shared SSE hook used across all three dashboards
+└── App.jsx                # role-based protected routing
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+---
 
-### Deployment
+## Try it end to end
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+1. Open three browser tabs, log in as `customer`, `restaurant`, and `rider` respectively
+2. Place an order as the customer
+3. Accept it as the restaurant, then mark it ready
+4. Accept the incoming offer as the rider before the 10-second countdown runs out
+5. Watch the rider's marker walk the real road route on the customer's map, through pickup and delivery, while every dashboard's status updates live without a single manual refresh
 
-### `npm run build` fails to minify
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## Drawbacks to Build on
+
+- Currently only the latest state is retained -> Persist full order status history to support order timelines surviving a page refresh
+- Move rider-offer state from in-memory `CompletableFuture` to a DB-backed table with scheduled expiry, for multi-instance correctness
+- Fixed demo coordinates used -> Geocode arbitrary delivery addresses currently.
+
+---
+
+## Acknowledgement and Side note
+
+Most of the README and the ideation process included the use of AI. I forced myself to use original documentation for Redis, Kafka and Mapbox as I wanted to learn these technologies, but used AI to speed up the dev process, mostly CSS and JSX.
+
+---
