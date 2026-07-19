@@ -84,7 +84,7 @@ const pizzaData = [
 ];
 export default function Card({ handleAddToCart }) {
     return <div className="cards pizza-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 ">
-        {pizzaData.map((pizza) => <div key={pizza.name} className="pizza-item shadow-xl cursor-pointer rounded-2xl bg-amber-100 drop-shadow-black p-4 mb-4 w-fit text-left">
+        {pizzaData.map((pizza) => <div key={pizza.name} className="pizza-item shadow-xl cursor-pointer rounded-2xl bg-[#faedcd] drop-shadow-black p-4 mb-4 w-fit text-left">
             <img src={pizza.imageUrl} alt={pizza.name} className=" h-64  mb-4" />
             <h2 className="text-xl font-bold mb-2">{pizza.name}</h2>
             <p className="text-gray-600 mb-2">{pizza.size}</p>

@@ -25,19 +25,20 @@ const Cart = ({ cart, setCart }) => {
     };
 
     return (
-        <div className="cart h-screen">
+        <div className="cart h-full w-1/2">
             <div>
-                <h2>Your Order</h2>
-                <div className="order-list flex flex-col gap-3 mt-4">
+                <h2 className="text-xl font-medium text-gray-900">Your Order</h2>
+                <div className="order-list flex flex-col gap-3 mt-4 ">
                     {cart.map((item) => (
                         <div key={`${item.name}-${item.size}`}
-                            className="order-item flex items-center gap-4 p-4 border-2 rounded-xl">
+                            className="order-item flex items-center gap-4 p-4  bg-white border border-gray-100 rounded-2xl shadow-sm">
 
                             <img src={item.imageUrl} alt={item.name} className="h-20 w-20 rounded-lg object-cover shrink-0" />
 
-                            <div className="flex flex-col gap-1 flex-1">
+                            <div className="flex flex-col text-left gap-1 flex-1">
                                 <p className="font-medium">{item.name}</p>
                                 <p className="text-gray-500 text-sm">{item.size}</p>
+                                <p className="text-gray-500 text-sm">€{item.price.toFixed(2)}</p>
                             </div>
 
                             {/* Quantity controls */}

@@ -13,7 +13,7 @@ const ProtectedRoute = ({ children, role }) => {
   if (role && storedRole !== role) return <Navigate to={`/${storedRole}`} />;
   return children;
 };
-export default function App() {
+const App = () => {
   const location = useLocation();
   return (
     <>
@@ -54,3 +54,4 @@ export default function App() {
     </>
   );
 }
+export default App;

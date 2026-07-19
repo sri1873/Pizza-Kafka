@@ -10,8 +10,12 @@ const HomePage = () => {
         setToast(message);
         setTimeout(() => setToast(null), 4000);
     };
+
     useEffect(() => {
-        sessionStorage.setItem('cart', JSON.stringify(cart));
+        setCart(sessionStorage.getItem('cart') ? JSON.parse(sessionStorage.getItem('cart')) : []);
+     },[]);
+
+    useEffect(() => {
         globalThis.dispatchEvent(new Event('cartUpdated'));
     }, [cart]);
 
