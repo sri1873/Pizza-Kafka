@@ -1,0 +1,6 @@
+[submodule "kafka-pizzeria-frontend"]
+	path = kafka-pizzeria-frontend
+	url = https://github.com/sri1873/kafka-pizzeria-frontend.git
+[submodule "kafka-pizzeria-backend"]
+	path = kafka-pizzeria-backend
+	url = https://github.com/sri1873/kafka-pizzeria-backend.git
