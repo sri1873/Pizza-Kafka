@@ -32,7 +32,9 @@ services:
         image: sri1873/pizzakafka-frontend:latest
         container_name: frontend
         build:
-            context: ./kafka-pizzeria-frontend
+            context: ./frontend
+            args:
+                - VITE_MAPBOX_ACCESS_TOKEN=${VITE_MAPBOX_ACCESS_TOKEN}
             dockerfile: Dockerfile
         ports:
             - "3000:80"
@@ -43,7 +45,7 @@ services:
         image: sri1873/pizzakafka-backend:latest
         container_name: backend
         build:  
-            context: ./kafka-pizzeria-backend
+            context: ./backend
             dockerfile: Dockerfile
         ports:
             - "8080:8080"
@@ -51,4 +53,4 @@ services:
             - broker
             - redis
         volumes:
-            - ./kafka-pizzeria-backend/data:/backend/data
+            - ./backend/data:/backend/data
