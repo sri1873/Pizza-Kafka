@@ -1,9 +1,6 @@
 # Pizza Kafka — Frontend
 
 A three-role React dashboard (customer, restaurant, rider) for a real-time food delivery platform, built to consume an event-driven Spring Boot + Kafka backend live — order tracking, sequential rider dispatch, and live map tracking, all reflected in the UI as they happen.
-
-**Backend repo:** [pizza-kafka-backend](https://github.com/sri1873/kafka-pizzaria-backend)
-
 ---
 
 ## What this demonstrates
@@ -60,7 +57,6 @@ The backend caches the last notification sent per user and replays it immediatel
 
 ### Prerequisites
 - Node 18+
-- The [backend](https://github.com/sri1873/kafka-pizzaria-backend) running locally on `localhost:8080` (Kafka + Redis + Spring Boot)
 
 ### Install & run
 ```bash
@@ -102,19 +98,5 @@ src/
 3. Accept it as the restaurant, then mark it ready
 4. Accept the incoming offer as the rider before the 10-second countdown runs out
 5. Watch the rider's marker walk the real road route on the customer's map, through pickup and delivery, while every dashboard's status updates live without a single manual refresh
-
----
-
-## Drawbacks to Build on
-
-- Currently only the latest state is retained -> Persist full order status history to support order timelines surviving a page refresh
-- Move rider-offer state from in-memory `CompletableFuture` to a DB-backed table with scheduled expiry, for multi-instance correctness
-- Fixed demo coordinates used -> Geocode arbitrary delivery addresses currently.
-
----
-
-## Acknowledgement and Side note
-
-Most of the README and the ideation process included the use of AI. I forced myself to use original documentation for Redis, Kafka and Mapbox as I wanted to learn these technologies, but used AI to speed up the dev process, mostly CSS and JSX.
 
 ---

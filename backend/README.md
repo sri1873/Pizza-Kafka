@@ -2,8 +2,6 @@
 
 An event-driven food delivery backend built on Apache Kafka, showcasing real-time order orchestration across four independent Spring Boot microservices, live rider geolocation with Redis, and real-time client updates via Server-Sent Events and WebSocket.
 
-**Frontend repo:** [pizza-kafka-frontend](https://github.com/sri1873/kafka-pizzeria-frontend)
-
 ---
 
 ## Motivation
@@ -109,7 +107,7 @@ This wasn't arbitrary — SSE is one-directional and lighter-weight than WebSock
 
 ### 1. Start Kafka + Redis
 ```bash
-docker compose up -d
+docker compose broker redis up -d
 ```
 
 This brings up:
@@ -153,23 +151,3 @@ src/main/java/com/kafka/learn/
 └── controller/         # REST endpoints per role (customer/restaurant/rider)
 ```
 
----
-
-## Drawbacks to Build on
-
-- Currently only the latest state is retained -> Persist full order status history to support order timelines surviving a page refresh
-- Move rider-offer state from in-memory `CompletableFuture` to a DB-backed table with scheduled expiry, for multi-instance correctness
-- Fixed demo coordinates used -> Geocode arbitrary delivery addresses currently.
-- Swap H2 for Postgres and containerise the full stack for deployment
-
----
-
-## Related
-
-Frontend built in React + Vite + Tailwind, consuming this backend via REST, SSE, and WebSocket — see [pizza-kafka-frontend](https://github.com/sri1873/kafka-pizzeria-frontend).
-
-
-
-## Acknowledgement and Side note
-
-Most of the README and the ideation process included the use of AI. I forced myself to use original documentation for Redis, Kafka and Mapbox, as I wanted to learn these technologies but used AI to speed up the dev process, mostly CSS and JSX.
