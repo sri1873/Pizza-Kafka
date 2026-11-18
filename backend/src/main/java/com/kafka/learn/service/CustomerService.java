@@ -22,7 +22,6 @@ public class CustomerService {
     private UserRepository userRepository;
 
 
-
     @KafkaListener(topics = "order_info", groupId = "customer-service-group")
     public void customerOrderUpdate(OrderDetails order) {
         notificationService.sendNotification(order.getUser().getUserId(),
@@ -34,5 +33,6 @@ public class CustomerService {
     public void createUser(UUID userId) {
         userRepository.save(User.builder().build());
     }
+
 }
 

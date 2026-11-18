@@ -13,11 +13,11 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "items")
-public class Items {
+@Table(name = "item")
+public class Item {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID itemId;
     private String item;
-    private int quantity;
+    private double price;
 }

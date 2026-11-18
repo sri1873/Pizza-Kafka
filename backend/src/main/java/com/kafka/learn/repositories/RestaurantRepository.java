@@ -28,5 +28,10 @@ public interface RestaurantRepository extends JpaRepository<OrderDetails, UUID> 
     @Query(value = "SELECT o FROM OrderDetails o WHERE o.rider.riderId = :riderId and o.status != 'DELIVERED'")
     List<OrderDetails> findByRiderIdAndStatusNot(UUID riderId);
 
+    @Query(value = "SELECT o FROM OrderDetails o WHERE o.user.userId = :userId AND o.isActive = true")
+    List<OrderDetails> findByUserIdAndActive(UUID userId);
+
+    @Query(value = "SELECT o FROM OrderDetails o WHERE o.user.userId = :userId AND o.isActive = false")
+    List<OrderDetails> findByUserIdAndInactive(UUID userId);
 }
 

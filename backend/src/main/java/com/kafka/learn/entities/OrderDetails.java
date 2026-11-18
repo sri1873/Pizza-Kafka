@@ -19,19 +19,30 @@ public class OrderDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID orderId;
+
+    @Enumerated(EnumType.STRING)
+    private OrderStatus status;
+
+    @Builder.Default
+    private boolean isActive = true;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "delivery_address_id")
+    private Address deliveryAddress;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @ManyToOne
+    @JoinColumn(name = "rider_id")
+    private Rider rider;
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderItem> orderItems;
+
     @Builder.Default
     private Instant createdAt = Instant.now();
     @Builder.Default
     private Instant lastUpdated = Instant.now();
-    @Enumerated(EnumType.STRING)
-    private OrderStatus status;
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user;
-    @ManyToOne
-    @JoinColumn(name = "rider_id")
-    private Rider rider;
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "order_id")
-    private List<Items> items;
 }

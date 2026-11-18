@@ -1,12 +1,18 @@
 # Pizza Kafka — Backend
 
-An event-driven food delivery backend built on Apache Kafka, showcasing real-time order orchestration across four independent Spring Boot microservices, live rider geolocation with Redis, and real-time client updates via Server-Sent Events and WebSocket.
+An event-driven food delivery backend built on Apache Kafka, showcasing real-time order orchestration across four
+independent Spring Boot microservices, live rider geolocation with Redis, and real-time client updates via Server-Sent
+Events and WebSocket.
 
 ---
 
 ## Motivation
 
-This project was built to model how a real delivery platform (think Deliveroo, Uber Eats) coordinates **multiple independent services that don't call each other directly**, but instead react to a shared stream of events. The goal was to get hands-on with the patterns that actually show up at that scale: event-driven architecture, geospatial matching, sequential offer-based assignment, and multiple real-time transport protocols each used for the job they're actually suited to.
+This project was built to model how a real delivery platform (think Deliveroo, Uber Eats) coordinates **multiple
+independent services that don't call each other directly**, but instead react to a shared stream of events. The goal was
+to get hands-on with the patterns that actually show up at that scale: event-driven architecture, geospatial matching,
+sequential offer-based assignment, and multiple real-time transport protocols each used for the job they're actually
+suited to.
 
 Also, as a side note, to learn and try out Kafka.
 
@@ -41,7 +47,9 @@ Also, as a side note, to learn and try out Kafka.
                                                                                        └────────────────┘
 ```
 
-Every service is a Kafka consumer and, where relevant, a producer on the same `order_info` topic — a service reacts only to the order statuses it cares about, updates the order, and republishes the new state. No service calls another service's REST API directly for order state changes; the topic is the single source of truth for "what happened."
+Every service is a Kafka consumer and, where relevant, a producer on the same `order_info` topic — a service reacts only
+to the order statuses it cares about, updates the order, and republishes the new state. No service calls another
+service's REST API directly for order state changes; the topic is the single source of truth for "what happened."
 
 ---
 
@@ -51,37 +59,55 @@ Every service is a Kafka consumer and, where relevant, a producer on the same `o
 PLACED → ORDER_ACCEPTED → READY_FOR_PICKUP → RIDER_ASSIGNED → OUT_FOR_DELIVERY → DELIVERED
 ```
 
-Each transition is triggered by a different actor (customer, restaurant, or rider), published back to Kafka, and consumed by whichever services need to react — the restaurant dashboard, the customer's live tracker, and the rider-matching engine all move independently off the same event stream.
+Each transition is triggered by a different actor (customer, restaurant, or rider), published back to Kafka, and
+consumed by whichever services need to react — the restaurant dashboard, the customer's live tracker, and the
+rider-matching engine all move independently off the same event stream.
 
 ---
 
 ## Key engineering decisions
 
 ### 1. One topic, status-driven routing
-Rather than a topic per event type, all order lifecycle events flow through a single `order_info` topic keyed by `orderId`. Keying by order ID guarantees Kafka delivers all of an order's events to the same partition — so updates for a given order are always processed **in order**, never racing each other across partitions.
+
+Rather than a topic per event type, all order lifecycle events flow through a single `order_info` topic keyed by
+`orderId`. Keying by order ID guarantees Kafka delivers all of an order's events to the same partition — so updates for
+a given order are always processed **in order**, never racing each other across partitions.
 
 ### 2. Sequential rider assignment (no race conditions by design)
-When an order is ready, nearby riders are found via Redis `GEORADIUS` and offered the job **one at a time**, closest first — not broadcast to everyone at once. Each offer is backed by a `CompletableFuture` with a 10-second timeout:
+
+When an order is ready, nearby riders are found via Redis `GEORADIUS` and offered the job **one at a time**, closest
+first — not broadcast to everyone at once. Each offer is backed by a `CompletableFuture` with a 10-second timeout:
 
 ```java
 Boolean accepted = future.get(10, TimeUnit.SECONDS);
 ```
 
-If the rider accepts, the future completes, and the order is locked to them immediately — no other rider is ever notified, so there's no possibility of a double-accept race condition. If they decline or time out, the loop moves to the next-closest rider. This trades a small amount of latency (worst case: 10s × number of riders tried) for correctness without needing distributed locks.
+If the rider accepts, the future completes, and the order is locked to them immediately — no other rider is ever
+notified, so there's no possibility of a double-accept race condition. If they decline or time out, the loop moves to
+the next-closest rider. This trades a small amount of latency (worst case: 10s × number of riders tried) for correctness
+without needing distributed locks.
 
-*Production note:* this in-memory approach is appropriate for a single instance. At multi-instance scale, the same pattern would move to a database-backed offer table with a scheduled expiry sweep, so state survives restarts and works across horizontally scaled instances.
+*Production note:* this in-memory approach is appropriate for a single instance. At multi-instance scale, the same
+pattern would move to a database-backed offer table with a scheduled expiry sweep, so state survives restarts and works
+across horizontally scaled instances.
 
 ### 3. Redis for live geolocation — not the database
-Rider positions update every few seconds. Writing that to a relational table would mean constant churn on rows nobody needs to keep historically. Redis's native `GEOADD`/`GEORADIUS` commands do exactly this job — fast in-memory writes, radius queries in a single command, and TTL-based expiry so a rider who drops offline disappears from the matching pool automatically.
+
+Rider positions update every few seconds. Writing that to a relational table would mean constant churn on rows nobody
+needs to keep historically. Redis's native `GEOADD`/`GEORADIUS` commands do exactly this job — fast in-memory writes,
+radius queries in a single command, and TTL-based expiry so a rider who drops offline disappears from the matching pool
+automatically.
 
 ### 4. Three real-time transports, each used for what it's good at
-| Transport | Direction | Used for |
-|---|---|---|
-| **Kafka** | service ↔ service | Order state changes, decoupled and durable |
-| **SSE** | server → browser | Pushing order status + rider-assignment offers to the UI |
-| **WebSocket** | browser → server | Streaming rider location updates every few seconds |
 
-This wasn't arbitrary — SSE is one-directional and lighter-weight than WebSocket for server-push notifications; WebSocket is used specifically where the browser needs to continuously *send* data (location), which SSE cannot do.
+| Transport     | Direction         | Used for                                                 |
+|---------------|-------------------|----------------------------------------------------------|
+| **Kafka**     | service ↔ service | Order state changes, decoupled and durable               |
+| **SSE**       | server → browser  | Pushing order status + rider-assignment offers to the UI |
+| **WebSocket** | browser → server  | Streaming rider location updates every few seconds       |
+
+This wasn't arbitrary — SSE is one-directional and lighter-weight than WebSocket for server-push notifications;
+WebSocket is used specifically where the browser needs to continuously *send* data (location), which SSE cannot do.
 
 ---
 
@@ -101,28 +127,34 @@ This wasn't arbitrary — SSE is one-directional and lighter-weight than WebSock
 ## Getting started
 
 ### Prerequisites
+
 - Java 17
 - Docker + Docker Compose
 - Maven
 
 ### 1. Start Kafka + Redis
+
 ```bash
 docker compose broker redis up -d
 ```
 
 This brings up:
+
 - Kafka broker (KRaft mode) on `localhost:9092`
 - Redis on `localhost:6379`
 
 ### 2. Run the application
+
 ```bash
 mvn clean install
 mvn spring-boot:run
 ```
 
-The app starts on `localhost:8080` and connects to Kafka/Redis automatically. H2 file-based storage persists to `./data` between restarts.
+The app starts on `localhost:8080` and connects to Kafka/Redis automatically. H2 file-based storage persists to `./data`
+between restarts.
 
 ### 3. Verify
+
 ```bash
 # Kafka topic exists, and broker is reachable
 docker exec -it broker kafka-topics.sh --bootstrap-server localhost:9092 --list

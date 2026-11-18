@@ -1,8 +1,8 @@
 package com.kafka.learn.controller;
 
-import com.kafka.learn.dto.OrderDetailsRequest;
+import com.kafka.learn.dto.OrderDetailsRequestDTO;
+import com.kafka.learn.dto.OrderResponseDTO;
 import com.kafka.learn.dto.UpdateOrderStatusDTO;
-import com.kafka.learn.entities.OrderDetails;
 import com.kafka.learn.service.RestaurantService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -23,28 +23,28 @@ public class RestaurantController {
         restaurantService.updateOrderStatus(updateOrderStatusDTO);
     }
 
-    @GetMapping(value = "/restaurant/orders")
-    public List<OrderDetails> findAllOrders(@RequestParam String status) {
-        return restaurantService.getOrderByStatus(status);
-    }
 
     @PostMapping(value = "/restaurant/placeorder", headers = {"content-type=application/json"})
-    public OrderDetails order(@RequestBody OrderDetailsRequest orderDetailsRequest) {
-        return restaurantService.newOrder(orderDetailsRequest);
+    public void order(@RequestBody OrderDetailsRequestDTO orderDetailsRequestDTO) {
+        restaurantService.newOrder(orderDetailsRequestDTO);
     }
 
     @GetMapping("/restaurant/order/byrider")
-    public ResponseEntity<OrderDetails> findByRiderId(@RequestParam UUID riderId) {
+    public ResponseEntity<OrderResponseDTO> findByRiderId(@RequestParam UUID riderId) {
 
-        return restaurantService.getOrderByRiderId(riderId)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        return ResponseEntity.ok(restaurantService.getOrderByRiderId(riderId));
+
     }
 
-    @GetMapping("/restaurant/order/byuser")
-    public List<OrderDetails> findByuserId(@RequestParam UUID userId) {
+    @GetMapping("/restaurant/order/byuser/current")
+    public List<OrderResponseDTO> findCurrentOrders(@RequestParam UUID userId) {
 
-        return restaurantService.getOrderByUserId(userId);
+        return restaurantService.getCurrentOrderByUserId(userId);
+    }
+
+    @GetMapping("/restaurant/order/byuser/past")
+    public List<OrderResponseDTO> findPastOrders(@RequestParam UUID userId) {
+        return restaurantService.getPastOrderByUserId(userId);
     }
 
 }
